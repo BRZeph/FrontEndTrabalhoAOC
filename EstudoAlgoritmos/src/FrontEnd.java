@@ -1,4 +1,8 @@
+import jdk.jshell.execution.Util;
+
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FrontEnd {
     private JFrame frame;
@@ -80,15 +84,39 @@ public class FrontEnd {
         frame.setVisible(true);
     }
     private void calculator() {
+        Utils.registerLetters();
+        resultBox.setText("");
+        errorBox.setText("");
         // Retrieve the text from the input field
-        String baseInicial = inputFieldBaseInicial.getText();
+        int baseInicial = Utils.verSeBasesSaoNumeros(inputFieldBaseInicial.getText());
+        int baseFinal = Utils.verSeBasesSaoNumeros(inputFieldBaseFinal.getText());
         String numeroInicial = inputFieldNumeroInicial.getText();
-        String baseFinal = inputFieldBaseFinal.getText();
 
-        resultBox.setText("o resultado é ");
-        resultBox.append(baseInicial + "\n" +
-                "base inicial = " + baseInicial + "\n" +
-                "base final = " + baseFinal + "\n" +
-                "numero inicial = " + numeroInicial);
+        if (baseFinal == -999999 || baseInicial == -999999) {
+        } else {
+            if (baseInicial < 2 || baseFinal < 2) {
+                Utils.erros.add("As bases tem que ser maior que 2");
+            }
+            if (!Utils.allowedNumberBaseCombination(numeroInicial, baseInicial)) {
+                Utils.erros.add("Número inicial nao coerente com a base");
+            }
+        }
+        if (Utils.erros.isEmpty()) {
+            String finalNumber;
+            if (baseFinal == 10) {
+                finalNumber = Utils.transformToBase10(numeroInicial, baseInicial);
+            } else if (baseInicial == 10) {
+                finalNumber = Utils.transformFromBase10(numeroInicial, baseFinal);
+            } else {
+                finalNumber = Utils.transformFromBase10(Utils.transformToBase10(numeroInicial, baseInicial), baseFinal);
+            }
+            if (finalNumber != "zzzzzzzzzzzzzzz") {
+                resultBox.append("(" + numeroInicial.toUpperCase() + ")" + baseInicial + " = " + "(" + finalNumber.toUpperCase() + ")" + baseFinal);
+            }
+        }
+        for (String erro : Utils.erros) {
+            errorBox.append(erro + "\n");
+        }
+        Utils.erros.clear();
     }
 }

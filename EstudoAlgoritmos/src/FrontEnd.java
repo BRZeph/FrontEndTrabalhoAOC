@@ -1,8 +1,5 @@
-import jdk.jshell.execution.Util;
-
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Objects;
 
 public class FrontEnd {
     private JFrame frame;
@@ -48,10 +45,12 @@ public class FrontEnd {
 
 
         resultBox = new JTextArea();
+        resultBox.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(resultBox);
         scrollPane.setBounds((screenWidth - resultWidth)/2, resultYPos, resultWidth, resultHeight);
 
         errorBox = new JTextArea();
+        errorBox.setEditable(false);
         JScrollPane scrollPane2 = new JScrollPane(errorBox);
         scrollPane2.setBounds((screenWidth - errorBoxWidth)/2, errorBoxYPos, errorBoxWidth, errorBoxHeight);
 
@@ -87,36 +86,32 @@ public class FrontEnd {
         Utils.registerLetters();
         resultBox.setText("");
         errorBox.setText("");
-        // Retrieve the text from the input field
-        int baseInicial = Utils.verSeBasesSaoNumeros(inputFieldBaseInicial.getText());
-        int baseFinal = Utils.verSeBasesSaoNumeros(inputFieldBaseFinal.getText());
-        String numeroInicial = inputFieldNumeroInicial.getText();
 
-        if (baseFinal == -999999 || baseInicial == -999999) {
-        } else {
-            if (baseInicial < 2 || baseFinal < 2) {
-                Utils.erros.add("As bases tem que ser maior que 2");
-            }
-            if (!Utils.allowedNumberBaseCombination(numeroInicial, baseInicial)) {
-                Utils.erros.add("Número inicial nao coerente com a base");
-            }
-        }
-        if (Utils.erros.isEmpty()) {
-            String finalNumber;
-            if (baseFinal == 10) {
-                finalNumber = Utils.transformToBase10(numeroInicial, baseInicial);
-            } else if (baseInicial == 10) {
-                finalNumber = Utils.transformFromBase10(numeroInicial, baseFinal);
-            } else {
-                finalNumber = Utils.transformFromBase10(Utils.transformToBase10(numeroInicial, baseInicial), baseFinal);
-            }
-            if (finalNumber != "zzzzzzzzzzzzzzz") {
-                resultBox.append("(" + numeroInicial.toUpperCase() + ")" + baseInicial + " = " + "(" + finalNumber.toUpperCase() + ")" + baseFinal);
+        int baseInicial;
+        int baseFinal;
+        String numeroInicial = inputFieldNumeroInicial.getText();
+        if(Utils.baseAceitavel(inputFieldBaseInicial.getText()) && Utils.baseAceitavel(inputFieldBaseFinal.getText())){
+            baseInicial = Integer.parseInt(inputFieldBaseInicial.getText());
+            baseFinal = Integer.parseInt(inputFieldBaseFinal.getText());
+
+            Utils.allowedNumberBaseCombination(numeroInicial, baseInicial);
+
+            if (Utils.erros.isEmpty()) {
+                String numeroFinal;
+                if (baseFinal == 10) {
+                    numeroFinal = Utils.transformToBase10(numeroInicial, baseInicial);
+                } else if (baseInicial == 10) {
+                    numeroFinal = Utils.transformFromBase10(numeroInicial, baseFinal);
+                } else {
+                    numeroFinal = Utils.transformFromBase10(Utils.transformToBase10(numeroInicial, baseInicial), baseFinal);
+                }
+                resultBox.append("(" + numeroInicial.toUpperCase() + ")" + baseInicial + " = " + "(" + numeroFinal.toUpperCase() + ")" + baseFinal);
             }
         }
         for (String erro : Utils.erros) {
             errorBox.append(erro + "\n");
         }
+        Utils.getRest().clear();
         Utils.erros.clear();
     }
 }

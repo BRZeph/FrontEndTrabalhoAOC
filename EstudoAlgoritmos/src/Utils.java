@@ -2,12 +2,14 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Scanner;
 
 public class Utils {
-    private static HashMap<Integer, Integer> rest = new HashMap<>();
-    private static HashMap<Character, Integer> extendedNumbers = new HashMap<>();
+    private static HashMap<Double, Integer> rest = new HashMap<>();
     public static List<String> erros =  new ArrayList<>();
+    private static HashMap<Character, Integer> extendedNumbers = new HashMap<>();
+    public static HashMap<Double, Integer> getRest(){
+        return rest;
+    }
     public static void registerLetters(){
         extendedNumbers.put('a',10);
         extendedNumbers.put('b',11);
@@ -36,34 +38,62 @@ public class Utils {
         extendedNumbers.put('y', 34);
         extendedNumbers.put('z', 35);
     }
-    public static boolean allowedNumberBaseCombination(String IN, int IB){
-        for (char digitChar : IN.toCharArray()){
-            int digitValue = getNumericValue(digitChar);
-            if (digitValue > IB){
-                return false;
-            }
-        }
-        return true;
-    }
-    public static int getNumericValue(char c){
-        if (Character.isDigit(c)){
-            return Character.getNumericValue(c);
-        } else {
-            for (char c2 : extendedNumbers.keySet()){
-                if (Character.toLowerCase(c) == c2){
-                    return extendedNumbers.get(c2);
+    public static void allowedNumberBaseCombination(String numeroInicial, double baseInicial){
+        System.out.println("checando se o número " + numeroInicial + " é permitido na base " + baseInicial);
+        boolean numeroPermitido = true;
+        for (char digitChar : numeroInicial.toCharArray()){
+            if (isNumericValue(digitChar)){
+                double digitValue = getNumericValue(digitChar);
+                if (digitValue >= baseInicial){
+                    numeroPermitido = false;
+                    System.out.println("Numero " + numeroInicial + " NÃO permitido na base " + baseInicial);
+                    Utils.erros.add("Número inicial maior que a base inicial");
                 }
             }
-            erros.add("Número nao registrado: " + c);
-            return -1;
+        }
+        if (numeroPermitido) {
+            System.out.println("Numero " + numeroInicial + " permitido na base " + baseInicial);
         }
     }
-    public static String getLetterValue(int i){
+    public static boolean isNumericValue(char c){
+        System.out.println("Checando se " + c + " é um dígito aceitável");
+        if (Character.isDigit(c)){
+            System.out.println(c + " é um número permitido");
+            return true;
+        }
+        for (char c2 : extendedNumbers.keySet()){
+            if (Character.toLowerCase(c) == c2){
+                System.out.println(c + " é uma letra permitida");
+                return true;
+            }
+        }
+        System.out.println(c + " nao é um dígito permitido");
+        erros.add("Número nao registrado: " + c);
+        return false;
+    }
+    public static double getNumericValue(char c){
+        System.out.println("Procurando o valor número de " + c);
+        if (Character.isDigit(c)){
+            System.out.println(c + " é um número, retornando " + c);
+            return Character.getNumericValue(c);
+        }
+        for (char c2 : extendedNumbers.keySet()){
+            if (Character.toLowerCase(c) == c2){
+                System.out.println(c + " é uma letra, retornando " + extendedNumbers.get(c2));
+                return extendedNumbers.get(c2);
+            }
+        }
+        throw new IllegalArgumentException();
+    }
+    public static String getLetterValue(double i){
+        System.out.println("Transformando " + i + " em letra");
         if (i < 10){
-            return String.valueOf(i);
+            System.out.println("Valor " + i + " numérico, retornando " + i);
+            return String.valueOf((int) i);
         } else {
             for (char c : extendedNumbers.keySet()){
                 if (extendedNumbers.get(c) == i){
+                    System.out.println("Valor encontrado para " + i + ": " + c);
                     return String.valueOf(c);
                 }
             }
@@ -71,59 +101,69 @@ public class Utils {
             return null;
         }
     }
-    public static String transformToBase10(String IN, int IB){
-        int i = 1;
+    public static String transformToBase10(String numeroInicial, int baseInicial) {
+        System.out.println("Transformando (" + numeroInicial + ")" + baseInicial + " para base 10");
+        String temp = numeroInicial;
+
+        BigDecimal base = new BigDecimal(baseInicial);
         BigDecimal finalNumber = BigDecimal.ZERO;
-        for (char digitChar : IN.toCharArray()){
-            System.out.printf("transformando para a base 10" + finalNumber + "\n");
-            int digitValue = getNumericValue(digitChar);
-            BigDecimal additive = new BigDecimal(Math.pow(IB, IN.length() - i)).multiply(BigDecimal.valueOf(digitValue));
+        int length = numeroInicial.length();
+
+        for (int i = 0; i < length; i++) {
+            char digitChar = numeroInicial.charAt(i);
+            BigDecimal digitValue = BigDecimal.valueOf(Character.getNumericValue(digitChar));
+            BigDecimal power = base.pow(length - 1 - i);
+            BigDecimal additive = digitValue.multiply(power);
             finalNumber = finalNumber.add(additive);
-            i++;
+            System.out.println("Final Number: " + finalNumber.toPlainString());
         }
-        return String.valueOf(finalNumber);
+
+        System.out.println("numero transformado: (" + temp + ")" + baseInicial + " = (" + finalNumber.toPlainString() + ")10");
+        return finalNumber.toPlainString();
     }
 
 
-    public static String transformFromBase10(String IN, int FB){
-        if (IN.toCharArray().length > 9){
-            erros.add("Número inicial superior ao limite de caracter");
-            return "zzzzzzzzzzzzzzz";
-        } else {
-            System.out.printf("tamanho da string = " + IN.toCharArray().length);
-            boolean dividing = true;
-            int count = 1;
-            int firstDividend = Integer.parseInt(IN);
-            while (dividing) {
-                int newDividend = (int) (firstDividend / (Math.pow(FB, count - 1)));
-                int quotient = newDividend / FB;
-                int newRemainder = newDividend % FB;
-                rest.put(count, newRemainder);
-                count++;
-                if (quotient < 1) {
-                    dividing = false;
-                }
+    public static String transformFromBase10(String numeroInicial, double baseFinal){
+        System.out.println("Transformando (" + numeroInicial + ")10 para base " + baseFinal);
+
+        boolean dividing = true;
+        double count = 1;
+        double firstDividend = Double.parseDouble(numeroInicial);
+        while (dividing) {
+            double newDividend = firstDividend / (Math.pow(baseFinal, count - 1));
+            double quotient = newDividend / baseFinal;
+            int newRemainder = (int) (newDividend % baseFinal);
+            rest.put(count, newRemainder);
+            count++;
+            if (quotient < 1) {
+                dividing = false;
             }
-            StringBuilder sb = new StringBuilder(rest.size());
-            for (int i = rest.size(); i > 0; i--) {
-                int j = rest.get(i);
-                String append = getLetterValue(j).toUpperCase();
-                sb.append(append);
-            }
-            return sb.toString();
         }
+        StringBuilder sb = new StringBuilder(rest.size());
+        for (double i = rest.size(); i > 0; i--) {
+            int j = rest.get(i);
+            String append = getLetterValue(j).toUpperCase();
+            sb.append(append);
+        }
+
+        System.out.println("numero transformado: (" + numeroInicial + ")10 = (" + sb + ")" + baseFinal);
+        return sb.toString();
     }
-    public static int verSeBasesSaoNumeros(String n1){
-        boolean numeroInicial = true;
-        for (char c : n1.toCharArray()){
-            if (!Character.isDigit(c)){
-                Utils.erros.add("As bases tem que ser números inteiros positivos");
-                numeroInicial = false;
+    public static boolean baseAceitavel(String base){
+        System.out.println("Checando se a base " + base + " é permitida");
+        for(char c : base.toCharArray()){
+            if(!Character.isDigit(c)){
+                Utils.erros.add("A base " + base + " não é um número entre 2 e 35");
+                System.out.println("BASE ILEGAL ENCONTRADA: A base " + base + " não é um número entre 2 e 35");
+                return false;
             }
         }
-        if (numeroInicial) {
-            return Integer.parseInt(n1);
+        if(Integer.parseInt(base) > 36 || Integer.parseInt(base) < 2){
+            Utils.erros.add("A base " + base + " nao está entre 2 e 35");
+            System.out.println("BASE ILEGAL ENCONTRADA: A base " + base + " não está entre 2 e 35");
+            return false;
         }
-        return -999999;
+        System.out.println("Base permitida: " + base);
+        return true;
     }
 }
